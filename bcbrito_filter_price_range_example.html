@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <title>Filter Range Price Example by Bruno Brito</title>
+    <meta charset="utf-8" />
+    <style>
+      .range-slider {
+        height: 5px;
+        position: relative;
+        background-color: #eee6db;
+        border-radius: 2px;
+      }
+
+      .range-selected {
+        height: 100%;
+        left: 0%;
+        right: 0%;
+        position: absolute;
+        border-radius: 5px;
+        background-color: #dfceb5;
+      }
+
+      .range-input {
+        position: relative;
+      }
+
+      .range-input input {
+        position: absolute;
+        width: 100%;
+        height: 5px;
+        top: -7px;
+        background: none;
+        pointer-events: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+      }
+
+      .range-input input::-webkit-slider-thumb {
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background-color: #696255;
+        pointer-events: auto;
+        -webkit-appearance: none;
+      }
+
+      .range-input input::-moz-range-thumb {
+        height: 15px;
+        width: 15px;
+        border-radius: 50%;
+        background-color: #696255;
+        pointer-events: auto;
+        -moz-appearance: none;
+      }
+
+      .range-price {
+        font-family: 'Montserrat', Sans-serif;
+        margin: 30px 0;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .range-price label {
+        margin-right: 3%;
+      }
+
+      .range-price span {
+        font-family: 'Montserrat', Sans-serif;
+        width: 33%;
+        padding: 5px;
+        display: inline-block;
+      }
+
+      .range-price span:first-of-type {
+        margin-right: 15px;
+      }
+
+      .titulo-modalidade {
+        align-items: center;
+        align-content: center;
+        text-align: center;
+        font-family: 'Montserrat', Sans-serif;
+        text-decoration: none;
+        margin-bottom: 10%;
+      }
+
+      /* Estilos CSS para telas maiores */
+      .column {
+        float: left;
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+
+      .clear {
+        clear: both;
+      }
+
+      /* Estilos CSS para telas menores */
+      @media screen and (max-width: 768px) {
+        .column {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="column">
+        <div class="elementor-widget-container">
+          <h2 class="elementor-heading-title elementor-size-default titulo-modalidade">Locação</h2>
+        </div>
+        <div class="range locacao-range-slider">
+          <div class="range-slider">
+            <span class="range-selected"></span>
+          </div>
+          <div class="range-input">
+            <input type="range" class="min locacao-min" min="280" max="490" value="280" step="10" />
+            <input type="range" class="max locacao-max" min="280" max="490" value="490" step="10" />
+          </div>
+          <div class="range-price">
+            <label for="locacao-min">Min.</label>
+            <span class="locacao-min-price">280</span>
+            <label for="locacao-max">Max.</label>
+            <span class="locacao-max-price">5000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="column">
+        <div class="elementor-widget-container">
+          <h2 class="elementor-heading-title elementor-size-default titulo-modalidade">Venda</h2>
+        </div>
+        <div class="range venda-range-slider">
+          <div class="range-slider">
+            <span class="range-selected"></span>
+          </div>
+          <div class="range-input">
+            <input type="range" class="min venda-min" min="0" max="5000" value="0" step="1" />
+            <input type="range" class="max venda-max" min="0" max="5000" value="5000" step="1" />
+          </div>
+          <div class="range-price">
+            <label for="venda-min">Min.</label>
+            <span class="venda-min-price">0</span>
+            <label for="venda-max">Max.</label>
+            <span class="venda-max-price">5000</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="clear"></div>
+    </div>
+
+    <script>
+      const rangeMin = 10;
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const locacaoRangeElement = document.querySelector('.locacao-range-slider');
+        const vendaRangeElement = document.querySelector('.venda-range-slider');
+
+        ConfiguraFaixaPreco(locacaoRangeElement);
+        ConfiguraFaixaPreco(vendaRangeElement);
+      });
+
+      // Função de inicialização para cada elemento de intervalo
+      function ConfiguraFaixaPreco(element) {
+        const range = element.querySelector('.range-slider .range-selected');
+        const rangeInput = element.querySelectorAll('.range-input input');
+        const rangePrice = element.querySelectorAll('.range-price span');
+        const minOffset = calculaDeslocamento(rangeInput[0]);
+
+        rangePrice[0].textContent = formataMoeda(parseInt(rangeInput[0].value));
+        rangePrice[1].textContent = formataMoeda(parseInt(rangeInput[1].value));
+
+        rangeInput.forEach((input) => {
+          input.addEventListener('input', () => {
+            AtualizaFaixaPreco(range, rangeInput, rangePrice, minOffset);
+          });
+        });
+
+        rangePrice.forEach((span) => {
+          span.addEventListener('input', (event) => {
+            const minPrice = PegaValorMinimo(element);
+            const maxPrice = pegaValorMaximo(element);
+
+            if (maxPrice - minPrice >= rangeMin && maxPrice <= rangeInput[1].max) {
+              if (event.target.classList.contains('min-price')) {
+                rangeInput[0].value = minPrice;
+                AtualizaFaixaPreco(range, rangeInput, rangePrice, minOffset);
+              } else {
+                rangeInput[1].value = maxPrice;
+                AtualizaFaixaPreco(range, rangeInput, rangePrice, minOffset);
+              }
+            }
+          });
+        });
+      }
+
+      // Função para atualizar a exibição do intervalo selecionado
+      function AtualizaFaixaPreco(range, rangeInput, rangePrice, minOffset) {
+        const minRange = parseInt(rangeInput[0]?.value || 0);
+        const maxRange = parseInt(rangeInput[1]?.value || 0);
+
+        if (maxRange - minRange < rangeMin) {
+          if (event.target?.classList.contains('min')) {
+            rangeInput[0].value = maxRange - rangeMin;
+          } else {
+            rangeInput[1].value = minRange + rangeMin;
+          }
+        } else {
+          rangePrice[0].textContent = formataMoeda(minRange);
+          rangePrice[1].textContent = formataMoeda(maxRange);
+
+          const maximo = parseInt(rangeInput[1].getAttribute('max'));
+          const minimo = parseInt(rangeInput[0].getAttribute('min'));
+
+          const totalRange = rangeInput[1].offsetLeft - rangeInput[0].offsetLeft;
+          //const rangeWidth = (maxRange - minRange) / (maximo - minimo);
+          const leftPercent = ((minRange - minimo) / (maximo - minimo)) * 100;
+          const rightPercent = 100 - ((maxRange - minimo) / (maximo - minimo)) * 100;
+
+          range.style.left = `${leftPercent}%`;
+          range.style.right = `${rightPercent}%`;
+        }
+      }
+
+      // Função de utilidade para formatar moeda
+      function formataMoeda(value) {
+        return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      }
+
+      // Função de utilidade para obter o valor mínimo do preço
+      function PegaValorMinimo(element) {
+        return parseInt(element.querySelector('.min-price').textContent.replace(/\D/g, ''));
+      }
+
+      // Função de utilidade para obter o valor máximo do preço
+      function pegaValorMaximo(element) {
+        return parseInt(element.querySelector('.max-price').textContent.replace(/\D/g, ''));
+      }
+
+      // Função para calcular o deslocamento entre o valor mínimo e zero
+      function calculaDeslocamento(minInput) {
+        const minOffset = parseInt(minInput.getAttribute('min')) || 0;
+        return Math.abs(minOffset);
+      }
+    </script>
+  </body>
+</html>
